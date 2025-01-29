@@ -1,0 +1,38 @@
+- name: Generate an AWX API token and create a user
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Generate an AWX API token
+      ansible.builtin.uri:
+        url: "http://192.168.49.2:32275/api/v2/tokens/"
+        method: POST
+        user: "admin"
+        password: "rWifnIyyVKA2WhEYjkDuTbOCVYca7aIG"
+        force_basic_auth: yes
+        status_code: 201
+        return_content: yes
+      register: token_response
+
+    - name: Show the generated token
+      debug:
+        msg: "Generated Token: {{ token_response.json.token }}"
+
+    - name: Create a new user in AWX
+      ansible.builtin.uri:
+        url: "http://192.168.49.2:32275/api/v2/users/"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ token_response.json.token }}"
+        body:
+          username: "new_user"
+          first_name: "New"
+          last_name: "User"
+          password: "password123"
+        body_format: json
+        status_code: 201
+        return_content: yes
+      register: user_creation_response
+
+    - name: Show the response from user creation
+      debug:
+        msg: "User creation response: {{ user_creation_response.json }}"
